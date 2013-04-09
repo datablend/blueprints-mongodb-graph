@@ -12,8 +12,8 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <blueprints.version>2.1.0</blueprints.version>
-        <rexster.version>2.1.0</rexster.version>
+        <blueprints.version>2.3.0</blueprints.version>
+        <rexster.version>2.3.0</rexster.version>
         <mongodb-java-driver.version>2.9.1</mongodb-java-driver.version>
     </properties>
 
