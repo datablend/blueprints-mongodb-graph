@@ -8,6 +8,7 @@ import com.tinkerpop.blueprints.util.StringFactory;
 import java.net.UnknownHostException;
 import java.util.*;
 import static be.datablend.blueprints.impls.mongodb.util.MongoDBUtil.*;
+import com.tinkerpop.blueprints.util.DefaultGraphQuery;
 
 /**
  * A Blueprints implementation of a graph on top of MongoDB
@@ -75,6 +76,7 @@ public class MongoDBGraph implements MetaGraph<DB>, KeyIndexableGraph {
         FEATURES.supportsThreadedTransactions = false;
     }
 
+    @Override
     public void shutdown() {
         // No actions required
     }
@@ -91,6 +93,7 @@ public class MongoDBGraph implements MetaGraph<DB>, KeyIndexableGraph {
         vertexCollection.dropIndexes();
     }
 
+    @Override
     public Edge getEdge(final Object id) {
         if (null == id)
             throw ExceptionFactory.edgeIdCanNotBeNull();
@@ -102,6 +105,7 @@ public class MongoDBGraph implements MetaGraph<DB>, KeyIndexableGraph {
         }
     }
 
+    @Override
     public Iterable<Edge> getEdges() {
         DBCursor cursor = edgeCollection.find(new BasicDBObject(), BasicDBObjectBuilder.start(MONGODB_ID, 1).get());
         return new MongoDBIterable<Edge>(cursor, this, Edge.class);
@@ -114,6 +118,7 @@ public class MongoDBGraph implements MetaGraph<DB>, KeyIndexableGraph {
         return new MongoDBIterable<Edge>(cursor, this, Edge.class);
     }
 
+    @Override
     public Edge addEdge(final Object id, final Vertex outVertex, final Vertex inVertex, final String label) {
         final MongoDBEdge edge = new MongoDBEdge(this);
         edgeCollection.insert(new BasicDBObject().append(MONGODB_ID, edge.getId())
@@ -123,16 +128,19 @@ public class MongoDBGraph implements MetaGraph<DB>, KeyIndexableGraph {
         return edge;
     }
 
+    @Override
     public void removeEdge(final Edge edge) {
         edgeCollection.remove(QueryBuilder.start(MONGODB_ID).is(edge.getId()).get());
     }
 
+    @Override
     public Vertex addVertex(final Object id) {
         MongoDBVertex vertex = new MongoDBVertex(this);
         vertexCollection.insert(new BasicDBObject().append(MONGODB_ID, vertex.getId()));
         return vertex;
     }
 
+    @Override
     public Vertex getVertex(final Object id) {
         if (null == id)
             throw ExceptionFactory.edgeIdCanNotBeNull();
@@ -144,6 +152,7 @@ public class MongoDBGraph implements MetaGraph<DB>, KeyIndexableGraph {
         }
     }
 
+    @Override
     public Iterable<Vertex> getVertices() {
         DBCursor cursor = vertexCollection.find(new BasicDBObject(), BasicDBObjectBuilder.start(MONGODB_ID, 1).get());
         return new MongoDBIterable<Vertex>(cursor, this, Vertex.class);
@@ -156,6 +165,7 @@ public class MongoDBGraph implements MetaGraph<DB>, KeyIndexableGraph {
         return new MongoDBIterable<Vertex>(cursor, this, Vertex.class);
     }
 
+    @Override
     public void removeVertex(final Vertex vertex) {
         MongoDBVertex thevertex =  (MongoDBVertex)vertex;
         Iterator<Edge> inedgesit = thevertex.getInEdges().iterator();
@@ -169,6 +179,7 @@ public class MongoDBGraph implements MetaGraph<DB>, KeyIndexableGraph {
         vertexCollection.remove(QueryBuilder.start(MongoDBUtil.MONGODB_ID).is(vertex.getId()).get());
     }
 
+    @Override
     public DB getRawGraph() {
         return graphDatabase;
     }
@@ -181,6 +192,7 @@ public class MongoDBGraph implements MetaGraph<DB>, KeyIndexableGraph {
         return vertexCollection;
     }
 
+    @Override
     public String toString() {
         return StringFactory.graphString(this, mongo.getConnectPoint());
     }
@@ -191,7 +203,7 @@ public class MongoDBGraph implements MetaGraph<DB>, KeyIndexableGraph {
     }
 
     @Override
-    public <T extends Element> void createKeyIndex(String key, Class<T> elementClass) {
+    public <T extends Element> void createKeyIndex(String key, Class<T> elementClass, Parameter... indexParameters) {
         getCollection(elementClass).ensureIndex(createPropertyKey(key));
     }
 
@@ -215,4 +227,7 @@ public class MongoDBGraph implements MetaGraph<DB>, KeyIndexableGraph {
         return vertexCollection;
     }
 
+    public GraphQuery query() {
+         return new DefaultGraphQuery(this);
+    }
 }
