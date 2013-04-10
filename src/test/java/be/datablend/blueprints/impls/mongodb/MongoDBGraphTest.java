@@ -72,11 +72,13 @@ public class MongoDBGraphTest extends GraphTest {
         printTestPerformance("GMLReaderTestSuite", this.stopWatch());
     }
 
+    @Override
     public Graph generateGraph() {
         this.currentGraph = new MongoDBGraph("localhost", 27017);
         return this.currentGraph;
     }
 
+    @Override
     public void doTestSuite(final TestSuite testSuite) throws Exception {
         for (Method method : testSuite.getClass().getDeclaredMethods()) {
             if (method.getName().startsWith("test")) {
@@ -91,6 +93,11 @@ public class MongoDBGraphTest extends GraphTest {
                 }
             }
         }
+    }
+
+    @Override
+    public Graph generateGraph(String string) {
+        throw new UnsupportedOperationException("Not supported yet.");
     }
 
 }
