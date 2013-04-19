@@ -19,10 +19,14 @@ import org.apache.commons.configuration.SubnodeConfiguration;
  *    <properties>
  *      <host>localhost</host>
  *      <port>27017</port>
+ *      <!-- Username and password elements are optional -->
+ *      <username>username</username>
+ *      <password>password</password>
  *    </properties>
  *  </graph>
  * </code>
  *
+ * Note username and password elements are optional
  * To deploy copy the MongoDBGraph jar (with dependencies) to the Rexster ext directory.   Ensure that the MongoDB
  * is running.
  *
@@ -41,15 +45,26 @@ public class MongoDBGraphConfiguration implements GraphConfiguration {
             throw new GraphConfigurationException("Check graph configuration. Missing or empty configuration element: " + Tokens.REXSTER_GRAPH_PROPERTIES);
         }
 
-        try {
+        final String username = orientDbSpecificConfiguration.getString("username", null);
+        final String password = orientDbSpecificConfiguration.getString("password", null);
+        final String host = orientDbSpecificConfiguration.getString("host", "localhost");
+        final int port = orientDbSpecificConfiguration.getInt("port", 27017);
 
-            final String host = orientDbSpecificConfiguration.getString("host", "localhost");
-            final int port = orientDbSpecificConfiguration.getInt("port", 27017);
+        if(username != null && password != null) {
+            // create mongo graph with username and password
+            try {
+                return new MongoDBGraph(host, port, username, password);
+            } catch (Exception ex) {
+                throw new GraphConfigurationException(ex);
+            }
+        } else {
+            try {
+                return new MongoDBGraph(host, port);
 
-            return new MongoDBGraph(host, port);
-
-        } catch (Exception ex) {
-            throw new GraphConfigurationException(ex);
+            } catch (Exception ex) {
+                throw new GraphConfigurationException(ex);
+            }   
         }
+        
     }
 }
