@@ -22,6 +22,7 @@ public class MongoDBGraph implements MetaGraph<DB>, KeyIndexableGraph {
     private final DBCollection edgeCollection;
     private final DBCollection vertexCollection;
     public static final String MONGODB_ERROR_EXCEPTION_MESSAGE = "An error occured within the MongoDB datastore";
+    public static final String MONGODB_ERROR_AUTH_MESSAGE = "Unable to authenticate with supplied username and password";
 
     private static final Features FEATURES = new Features();
 
@@ -41,6 +42,24 @@ public class MongoDBGraph implements MetaGraph<DB>, KeyIndexableGraph {
         }
     }
 
+    /**
+     * Construct a graph on top of MongoDB
+     */
+    public MongoDBGraph(final String host, final int port, final String username, final String password) {
+        try {
+            mongo = new Mongo(host, port);
+            graphDatabase = mongo.getDB(GRAPH_DATABASE);
+            graphDatabase.authenticateCommand(username, password.toCharArray());
+            edgeCollection = graphDatabase.getCollection(EDGE_COLLECTION);
+            vertexCollection = graphDatabase.getCollection(VERTEX_COLLECTION);
+            edgeCollection.ensureIndex(new BasicDBObject().append(IN_VERTEX_PROPERTY, 1));
+            edgeCollection.ensureIndex(new BasicDBObject().append(OUT_VERTEX_PROPERTY, 1));
+        } catch (UnknownHostException e) {
+                throw new RuntimeException(MongoDBGraph.MONGODB_ERROR_EXCEPTION_MESSAGE);
+        } catch (MongoException e) {
+            throw new RuntimeException(MongoDBGraph.MONGODB_ERROR_AUTH_MESSAGE, e);
+        }
+    }
     static {
         FEATURES.supportsDuplicateEdges = true;
         FEATURES.supportsSelfLoops = true;
