@@ -17,13 +17,11 @@ import com.tinkerpop.blueprints.util.DefaultGraphQuery;
  */
 public class MongoDBGraph implements MetaGraph<DB>, KeyIndexableGraph {
 
-    private final Mongo mongo;
     private final DB graphDatabase;
     private final DBCollection edgeCollection;
     private final DBCollection vertexCollection;
     public static final String MONGODB_ERROR_EXCEPTION_MESSAGE = "An error occured within the MongoDB datastore";
     public static final String MONGODB_ERROR_AUTH_MESSAGE = "Unable to authenticate with supplied username and password";
-
     private static final Features FEATURES = new Features();
 
     /**
@@ -31,15 +29,29 @@ public class MongoDBGraph implements MetaGraph<DB>, KeyIndexableGraph {
      */
     public MongoDBGraph(final String host, final int port) {
         try {
-            mongo = new Mongo(host, port);
+            Mongo mongo = new Mongo(host, port);
             graphDatabase = mongo.getDB(GRAPH_DATABASE);
             edgeCollection = graphDatabase.getCollection(EDGE_COLLECTION);
             vertexCollection = graphDatabase.getCollection(VERTEX_COLLECTION);
             edgeCollection.ensureIndex(new BasicDBObject().append(IN_VERTEX_PROPERTY, 1));
             edgeCollection.ensureIndex(new BasicDBObject().append(OUT_VERTEX_PROPERTY, 1));
         } catch (UnknownHostException e) {
-                throw new RuntimeException(MongoDBGraph.MONGODB_ERROR_EXCEPTION_MESSAGE);
+            throw new RuntimeException(MongoDBGraph.MONGODB_ERROR_EXCEPTION_MESSAGE);
         }
+    }
+
+    /**
+     *
+     * @param graphDatabase
+     */
+    public MongoDBGraph(DB graphDatabase) {
+        
+        this.graphDatabase = graphDatabase;
+        edgeCollection = graphDatabase.getCollection(EDGE_COLLECTION);
+        vertexCollection = graphDatabase.getCollection(VERTEX_COLLECTION);
+        edgeCollection.ensureIndex(new BasicDBObject().append(IN_VERTEX_PROPERTY, 1));
+        edgeCollection.ensureIndex(new BasicDBObject().append(OUT_VERTEX_PROPERTY, 1));
+
     }
 
     /**
@@ -47,7 +59,7 @@ public class MongoDBGraph implements MetaGraph<DB>, KeyIndexableGraph {
      */
     public MongoDBGraph(final String host, final int port, final String username, final String password) {
         try {
-            mongo = new Mongo(host, port);
+            Mongo mongo = new Mongo(host, port);
             graphDatabase = mongo.getDB(GRAPH_DATABASE);
             graphDatabase.authenticateCommand(username, password.toCharArray());
             edgeCollection = graphDatabase.getCollection(EDGE_COLLECTION);
@@ -55,11 +67,12 @@ public class MongoDBGraph implements MetaGraph<DB>, KeyIndexableGraph {
             edgeCollection.ensureIndex(new BasicDBObject().append(IN_VERTEX_PROPERTY, 1));
             edgeCollection.ensureIndex(new BasicDBObject().append(OUT_VERTEX_PROPERTY, 1));
         } catch (UnknownHostException e) {
-                throw new RuntimeException(MongoDBGraph.MONGODB_ERROR_EXCEPTION_MESSAGE);
+            throw new RuntimeException(MongoDBGraph.MONGODB_ERROR_EXCEPTION_MESSAGE);
         } catch (MongoException e) {
             throw new RuntimeException(MongoDBGraph.MONGODB_ERROR_AUTH_MESSAGE, e);
         }
     }
+
     static {
         FEATURES.supportsDuplicateEdges = true;
         FEATURES.supportsSelfLoops = true;
@@ -114,8 +127,9 @@ public class MongoDBGraph implements MetaGraph<DB>, KeyIndexableGraph {
 
     @Override
     public Edge getEdge(final Object id) {
-        if (null == id)
+        if (null == id) {
             throw ExceptionFactory.edgeIdCanNotBeNull();
+        }
         try {
             final UUID theId = UUID.fromString(id.toString());
             return new MongoDBEdge(this, theId);
@@ -161,8 +175,9 @@ public class MongoDBGraph implements MetaGraph<DB>, KeyIndexableGraph {
 
     @Override
     public Vertex getVertex(final Object id) {
-        if (null == id)
+        if (null == id) {
             throw ExceptionFactory.edgeIdCanNotBeNull();
+        }
         try {
             final UUID theId = UUID.fromString(id.toString());
             return new MongoDBVertex(this, theId);
@@ -186,7 +201,7 @@ public class MongoDBGraph implements MetaGraph<DB>, KeyIndexableGraph {
 
     @Override
     public void removeVertex(final Vertex vertex) {
-        MongoDBVertex thevertex =  (MongoDBVertex)vertex;
+        MongoDBVertex thevertex = (MongoDBVertex) vertex;
         Iterator<Edge> inedgesit = thevertex.getInEdges().iterator();
         while (inedgesit.hasNext()) {
             removeEdge(inedgesit.next());
@@ -213,7 +228,7 @@ public class MongoDBGraph implements MetaGraph<DB>, KeyIndexableGraph {
 
     @Override
     public String toString() {
-        return StringFactory.graphString(this, mongo.getConnectPoint());
+        return StringFactory.graphString(this, this.graphDatabase.getMongo().getConnectPoint());
     }
 
     @Override
@@ -230,8 +245,8 @@ public class MongoDBGraph implements MetaGraph<DB>, KeyIndexableGraph {
     public <T extends Element> Set<String> getIndexedKeys(Class<T> elementClass) {
         Set<String> results = new HashSet<String>();
         List<DBObject> indexes = getCollection(elementClass).getIndexInfo();
-        for(DBObject index : indexes) {
-            String name = ((DBObject)index.get("key")).keySet().iterator().next();
+        for (DBObject index : indexes) {
+            String name = ((DBObject) index.get("key")).keySet().iterator().next();
             if (!name.equals(MONGODB_ID) && (!name.startsWith("graph:"))) {
                 results.add(name);
             }
@@ -247,6 +262,6 @@ public class MongoDBGraph implements MetaGraph<DB>, KeyIndexableGraph {
     }
 
     public GraphQuery query() {
-         return new DefaultGraphQuery(this);
+        return new DefaultGraphQuery(this);
     }
 }
