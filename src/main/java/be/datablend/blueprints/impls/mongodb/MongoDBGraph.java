@@ -77,7 +77,6 @@ public class MongoDBGraph implements MetaGraph<DB>, KeyIndexableGraph {
         FEATURES.supportsDuplicateEdges = true;
         FEATURES.supportsSelfLoops = true;
         FEATURES.isPersistent = true;
-        FEATURES.isRDFModel = false;
         FEATURES.supportsVertexIteration = true;
         FEATURES.supportsEdgeIteration = true;
         FEATURES.supportsVertexIndex = false;
@@ -153,6 +152,9 @@ public class MongoDBGraph implements MetaGraph<DB>, KeyIndexableGraph {
 
     @Override
     public Edge addEdge(final Object id, final Vertex outVertex, final Vertex inVertex, final String label) {
+        if (label == null) {
+            throw new IllegalArgumentException("Cannot set null edge label");
+        }
         final MongoDBEdge edge = new MongoDBEdge(this);
         edgeCollection.insert(new BasicDBObject().append(MONGODB_ID, edge.getId())
                 .append(IN_VERTEX_PROPERTY, inVertex.getId())

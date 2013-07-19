@@ -1,6 +1,9 @@
 package be.datablend.blueprints.impls.mongodb;
 
+import com.foursquare.fongo.Fongo;
+import com.mongodb.DB;
 import com.tinkerpop.blueprints.*;
+import static com.tinkerpop.blueprints.BaseTest.printTestPerformance;
 import com.tinkerpop.blueprints.impls.GraphTest;
 import com.tinkerpop.blueprints.util.io.gml.GMLReaderTestSuite;
 import com.tinkerpop.blueprints.util.io.graphml.GraphMLReaderTestSuite;
@@ -41,9 +44,15 @@ public class MongoDBGraphTest extends GraphTest {
         printTestPerformance("GraphTestSuite", this.stopWatch());
     }
 
-    public void testQueryTestSuite() throws Exception {
+    public void testGraphQueryTestSuite() throws Exception {
         this.stopWatch();
-        doTestSuite(new QueryTestSuite(this));
+        doTestSuite(new GraphQueryTestSuite(this));
+        printTestPerformance("QueryTestSuite", this.stopWatch());
+    }
+    
+    public void testVertexQueryTestSuite() throws Exception {
+        this.stopWatch();
+        doTestSuite(new VertexQueryTestSuite(this));
         printTestPerformance("QueryTestSuite", this.stopWatch());
     }
 
@@ -75,6 +84,8 @@ public class MongoDBGraphTest extends GraphTest {
     @Override
     public Graph generateGraph() {
         this.currentGraph = new MongoDBGraph("localhost", 27017);
+//        DB db = new Fongo("test").getDB("graph");
+//        this.currentGraph = new MongoDBGraph(db);
         return this.currentGraph;
     }
 
