@@ -9,6 +9,7 @@ import com.tinkerpop.blueprints.Vertex;
 import java.util.Iterator;
 import java.util.List;
 import static be.datablend.blueprints.impls.mongodb.util.MongoDBUtil.MONGODB_ID;
+import java.util.NoSuchElementException;
 
 /**
  * @author Davy Suvee (http://datablend.be)
@@ -56,6 +57,9 @@ public class MongoDBIterable<T extends Element> implements CloseableIterable<T> 
 
         @Override
         public T next() {
+            if (!hasNext())
+               throw new NoSuchElementException();
+
             Object object = this.iterator.next().get(MONGODB_ID);
             T ret = null;
             if (clazz == Vertex.class) {
