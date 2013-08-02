@@ -264,6 +264,6 @@ public class MongoDBGraph implements MetaGraph<DB>, KeyIndexableGraph {
     }
 
     public GraphQuery query() {
-        return new DefaultGraphQuery(this);
+        return new MongoDBGraphQuery(this);
     }
 }
